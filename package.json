@@ -1,0 +1,31 @@
+{
+  "name": "chakula-api",
+  "version": "1.0.0",
+  "description": "Chakula food recommendation API",
+  "license": "ISC",
+  "author": "",
+  "type": "commonjs",
+  "main": "app.js",
+  "scripts": {
+    "start": "node cluster.js",
+    "start:single": "node app.js",
+    "dev": "node --watch app.js",
+    "migrate": "node core/database/migrate.js",
+    "seed": "node core/database/seed.js"
+  },
+  "dependencies": {
+    "bcryptjs": "^2.4.3",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.7",
+    "express": "^5.2.1",
+    "helmet": "^8.1.0",
+    "ioredis": "^5.6.1",
+    "jsonwebtoken": "^9.0.2",
+    "pg": "^8.13.3",
+    "uuid": "^11.1.0",
+    "express-rate-limit": "^7.5.0",
+    "rate-limit-redis": "^4.2.0",
+    "compression": "^1.8.0",
+    "hpp": "^0.2.3"
+  }
+}
