@@ -2,12 +2,12 @@ const db = require('../../core/database/db');
 
 // ─── Profile ──────────────────────────────────────────────
 
-async function createUser({ email, passwordHash, name, phone, locationId }) {
+async function createUser({ email, passwordHash, name, phone, locationId, region, subregion }) {
   const { rows } = await db.query(
-    `INSERT INTO users (email, password_hash, name, phone, location_id)
-     VALUES ($1, $2, $3, $4, $5)
-     RETURNING id, email, name, phone, location_id, created_at`,
-    [email, passwordHash, name, phone || null, locationId || null],
+    `INSERT INTO users (email, password_hash, name, phone, location_id, region, subregion)
+     VALUES ($1, $2, $3, $4, $5, $6, $7)
+     RETURNING id, email, name, phone, location_id, region, subregion, created_at`,
+    [email, passwordHash, name, phone || null, locationId || null, region || null, subregion || null],
   );
   return rows[0];
 }

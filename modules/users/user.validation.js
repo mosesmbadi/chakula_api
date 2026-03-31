@@ -4,10 +4,17 @@ const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const VALID_DIETARY_GOALS = ['gain_weight', 'lose_weight', 'high-protein', 'low-carb', 'high-fibre'];
 
 function validateRegister(req, _res, next) {
-  const { email, password, name, dietaryGoals, dailyBudget } = req.body;
+  const { email, password, name, region, subregion, dietaryGoals, dailyBudget } = req.body;
   if (!email || !EMAIL_RE.test(email)) throw new AppError('Valid email is required');
   if (!password || password.length < 8) throw new AppError('Password must be at least 8 characters');
   if (!name || name.trim().length < 1) throw new AppError('Name is required');
+
+  if (region !== undefined && (typeof region !== 'string' || region.trim().length === 0)) {
+    throw new AppError('region must be a non-empty string');
+  }
+  if (subregion !== undefined && (typeof subregion !== 'string' || subregion.trim().length === 0)) {
+    throw new AppError('subregion must be a non-empty string');
+  }
 
   if (dietaryGoals !== undefined) {
     if (!Array.isArray(dietaryGoals)) throw new AppError('dietaryGoals must be an array');

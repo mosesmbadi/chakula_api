@@ -34,12 +34,12 @@ async function isRefreshTokenValid(jti) {
 
 // ─── Auth ─────────────────────────────────────────────────
 
-async function register({ email, password, name, phone, locationId, dietaryGoals, dailyBudget }) {
+async function register({ email, password, name, phone, locationId, region, subregion, dietaryGoals, dailyBudget }) {
   const existing = await repo.findByEmail(email);
   if (existing) throw new AppError('Email already registered', 409);
 
   const passwordHash = await bcrypt.hash(password, SALT_ROUNDS);
-  const user = await repo.createUser({ email, passwordHash, name, phone, locationId });
+  const user = await repo.createUser({ email, passwordHash, name, phone, locationId, region, subregion });
 
   if (dietaryGoals && dietaryGoals.length > 0) {
     await repo.setDietaryPreferences(user.id, dietaryGoals);

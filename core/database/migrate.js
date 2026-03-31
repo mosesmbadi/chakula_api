@@ -24,6 +24,8 @@ CREATE TABLE IF NOT EXISTS users (
   name          VARCHAR(255) NOT NULL,
   phone         VARCHAR(30),
   location_id   UUID,
+  region        VARCHAR(100),
+  subregion     VARCHAR(100),
   created_at    TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   updated_at    TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
