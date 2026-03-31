@@ -21,14 +21,39 @@ async function recommendAll(req, res, next) {
 
 async function triggerGeneration(req, res, next) {
   try {
-    // Fire off generation in the background, don't block the response
-    service.generateForAllUsers().catch(err => {
-      console.error('[Manual trigger] generation failed:', err.message);
+    const { region, budget_per_meal_kes, dietary_goals, exclude_food_ids, meal_type, limit } = req.body;
+    const result = await service.generateForCurrentUser(req.user.userId, {
+      region,
+      budgetPerMealKes: budget_per_meal_kes,
+      dietaryGoals: dietary_goals,
+      excludeFoodIds: exclude_food_ids,
+      mealType: meal_type,
+      limit,
     });
-    res.json({ message: 'Recommendation generation started' });
+    res.json(result);
   } catch (err) {
     next(err);
   }
 }
 
-module.exports = { recommend, recommendAll, triggerGeneration };
+async function acceptMeal(req, res, next) {
+  try {
+    const { mealType, foods } = req.body;
+    const result = await service.acceptMealSuggestion(req.user.userId, { mealType, foods });
+    res.status(201).json(result);
+  } catch (err) {
+    next(err);
+  }
+}
+
+async function acceptPlan(req, res, next) {
+  try {
+    const { plan } = req.body;
+    const result = await service.acceptDayPlan(req.user.userId, { plan });
+    res.status(201).json(result);
+  } catch (err) {
+    next(err);
+  }
+}
+
+module.exports = { recommend, recommendAll, triggerGeneration, acceptMeal, acceptPlan };

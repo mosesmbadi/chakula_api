@@ -13,6 +13,7 @@ const redis = require('./core/redis');
 const userRoutes = require('./modules/users/user.routes');
 const locationRoutes = require('./modules/locations/location.routes');
 const recommendationRoutes = require('./modules/recommendations/recommendation.routes');
+const publicRecommendationRoutes = require('./modules/recommendations/recommendation.public.routes');
 
 const app = express();
 
@@ -40,6 +41,7 @@ app.get('/health', async (_req, res) => {
 app.use('/api/users', userRoutes);
 app.use('/api/locations', locationRoutes);
 app.use('/api/recommendations', recommendationRoutes);
+app.use('/api/public/recommendations', publicRecommendationRoutes);
 
 // ─── 404 ──────────────────────────────────────────────────
 app.use((_req, res) => {

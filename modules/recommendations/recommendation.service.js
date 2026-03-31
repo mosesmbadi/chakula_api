@@ -11,7 +11,7 @@ const KNOWLEDGE_BASE_KEY = config.knowledgeBase.apiKey;
 // ─── External API call ────────────────────────────────────
 
 async function fetchFromKnowledgeBase({ region, budgetPerMealKes, dietaryGoals, excludeFoodIds, mealType, limit }) {
-  const url = `${KNOWLEDGE_BASE_URL}/foods/recommend/`;
+  const url = `${KNOWLEDGE_BASE_URL}/foods/recommend`;
   const res = await fetch(url, {
     method: 'POST',
     redirect: 'follow',
@@ -103,6 +103,18 @@ async function generateForUser(userId) {
   return results;
 }
 
+// ─── Generate for the current authenticated user (called by POST /generate) ──
+
+async function generateForCurrentUser(userId, { region, budgetPerMealKes, dietaryGoals, excludeFoodIds, mealType, limit }) {
+  if (!MEAL_TYPES.includes(mealType)) {
+    throw new AppError(`Invalid meal type. Must be one of: ${MEAL_TYPES.join(', ')}`, 400);
+  }
+
+  const data = await fetchFromKnowledgeBase({ region, budgetPerMealKes, dietaryGoals, excludeFoodIds, mealType, limit });
+  await cacheRecommendations(userId, mealType, data);
+  return { mealType, recommendations: data };
+}
+
 // ─── Generate for ALL users (called by scheduler) ────────
 
 async function generateForAllUsers() {
@@ -110,6 +122,7 @@ async function generateForAllUsers() {
   let offset = 0;
   let totalProcessed = 0;
   let totalFailed = 0;
+  const userSummaries = [];
 
   console.log('[Scheduler] Starting daily recommendation generation…');
 
@@ -126,11 +139,20 @@ async function generateForAllUsers() {
     for (let i = 0; i < users.length; i += concurrency) {
       const batch = users.slice(i, i + concurrency);
       const results = await Promise.allSettled(
-        batch.map(u => generateForUser(u.id)),
+        batch.map(u => generateForUser(u.id).then(r => ({ userId: u.id, meals: r }))),
       );
       results.forEach(r => {
-        if (r.status === 'fulfilled') totalProcessed++;
-        else totalFailed++;
+        if (r.status === 'fulfilled') {
+          totalProcessed++;
+          const { userId, meals } = r.value;
+          const mealCounts = {};
+          for (const [mealType, data] of Object.entries(meals)) {
+            mealCounts[mealType] = Array.isArray(data) ? data.length : (data?.foods?.length ?? 0);
+          }
+          userSummaries.push({ userId, meals: mealCounts });
+        } else {
+          totalFailed++;
+        }
       });
     }
 
@@ -138,7 +160,7 @@ async function generateForAllUsers() {
   }
 
   console.log(`[Scheduler] Done — ${totalProcessed} users processed, ${totalFailed} failed`);
-  return { totalProcessed, totalFailed };
+  return { totalProcessed, totalFailed, users: userSummaries };
 }
 
 // ─── Read recommendations (called by API) ────────────────
@@ -188,10 +210,88 @@ async function getAllRecommendations(userId) {
   return results;
 }
 
+// ─── Accept food suggestions ─────────────────────────────
+
+const userRepo = require('../users/user.repository');
+
+async function acceptMealSuggestion(userId, { mealType, foods }) {
+  if (!MEAL_TYPES.includes(mealType)) {
+    throw new AppError(`Invalid meal type. Must be one of: ${MEAL_TYPES.join(', ')}`, 400);
+  }
+  if (!Array.isArray(foods) || foods.length === 0) {
+    throw new AppError('foods must be a non-empty array', 400);
+  }
+
+  const entries = await Promise.all(
+    foods.map(({ food_id, food_name, cost, currency }) => {
+      if (!food_name || cost === undefined || isNaN(Number(cost))) {
+        throw new AppError('Each food must have food_name and a numeric cost', 400);
+      }
+      return userRepo.addMealHistory(userId, {
+        mealId: food_id || null,
+        mealName: food_name,
+        cost: Number(cost),
+        currency: currency || 'KES',
+      });
+    }),
+  );
+
+  return { mealType, accepted: entries };
+}
+
+async function acceptDayPlan(userId, { plan }) {
+  if (!plan || typeof plan !== 'object') {
+    throw new AppError('plan must be an object with meal types as keys', 400);
+  }
+
+  const results = {};
+
+  for (const mealType of Object.keys(plan)) {
+    if (!MEAL_TYPES.includes(mealType)) {
+      throw new AppError(`Invalid meal type "${mealType}". Must be one of: ${MEAL_TYPES.join(', ')}`, 400);
+    }
+    const foods = plan[mealType];
+    if (!Array.isArray(foods) || foods.length === 0) {
+      throw new AppError(`Foods for "${mealType}" must be a non-empty array`, 400);
+    }
+    const { accepted } = await acceptMealSuggestion(userId, { mealType, foods });
+    results[mealType] = accepted;
+  }
+
+  return { accepted: results };
+}
+
+// ─── Public (unauthenticated) recommendation ─────────────
+
+async function getPublicRecommendation(mealType, { budgetPerMealKes, region }) {
+  const type = mealType || currentMealType();
+  if (!MEAL_TYPES.includes(type)) {
+    throw new AppError(`Invalid meal type. Must be one of: ${MEAL_TYPES.join(', ')}`, 400);
+  }
+  if (!budgetPerMealKes || isNaN(Number(budgetPerMealKes))) {
+    throw new AppError('budget is required and must be a number', 400);
+  }
+  if (!region || typeof region !== 'string') {
+    throw new AppError('region is required', 400);
+  }
+
+  const data = await fetchFromKnowledgeBase({
+    region,
+    budgetPerMealKes: Number(budgetPerMealKes),
+    mealType: type,
+  });
+
+  return { mealType: type, recommendations: data };
+}
+
 module.exports = {
   generateForUser,
+  generateForCurrentUser,
   generateForAllUsers,
   getRecommendation,
   getAllRecommendations,
+  getPublicRecommendation,
+  acceptMealSuggestion,
+  acceptDayPlan,
   MEAL_TYPES,
 };

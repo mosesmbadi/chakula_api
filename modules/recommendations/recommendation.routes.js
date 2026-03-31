@@ -16,4 +16,10 @@ router.get('/foods/recommend/all', ctrl.recommendAll);
 // POST /api/recommendations/generate — manually trigger the daily job
 router.post('/generate', ctrl.triggerGeneration);
 
+// POST /api/recommendations/accept — accept foods for a single meal type
+router.post('/accept', ctrl.acceptMeal);
+
+// POST /api/recommendations/accept/plan — accept the full day plan
+router.post('/accept/plan', ctrl.acceptPlan);
+
 module.exports = router;
