@@ -40,4 +40,11 @@ module.exports = {
     url: process.env.KNOWLEDGE_BASE_URL || 'http://127.0.0.1:8000',
     apiKey: process.env.KNOWLEDGE_BASE_API_KEY || '',
   },
+
+  s3: {
+    accessKeyId: process.env.S3_AWS_ACCESS_KEY_ID,
+    secretAccessKey: process.env.S3_AWS_SECRET_ACCESS_KEY,
+    region: process.env.S3_AWS_REGION || 'ap-south-1',
+    bucket: process.env.S3_BUCKET_NAME,
+  },
 };

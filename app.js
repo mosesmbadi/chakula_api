@@ -4,6 +4,7 @@ const cors = require('cors');
 const compression = require('compression');
 const hpp = require('hpp');
 const config = require('./core/config');
+const logger = require('./core/logger');
 const rateLimiter = require('./core/middleware/rateLimiter');
 const { errorHandler } = require('./core/middleware/errorHandler');
 const db = require('./core/database/db');
@@ -14,8 +15,13 @@ const userRoutes = require('./modules/users/user.routes');
 const locationRoutes = require('./modules/locations/location.routes');
 const recommendationRoutes = require('./modules/recommendations/recommendation.routes');
 const publicRecommendationRoutes = require('./modules/recommendations/recommendation.public.routes');
+const mealHistoryRoutes = require('./modules/meal-history/meal-history.routes');
 
 const app = express();
+
+// ─── HTTP request logging ────────────────────────────────
+const pinoHttp = require('pino-http');
+app.use(pinoHttp({ logger }));
 
 // ─── Security & performance middleware ────────────────────
 app.use(helmet());
@@ -42,6 +48,7 @@ app.use('/api/users', userRoutes);
 app.use('/api/locations', locationRoutes);
 app.use('/api/recommendations', recommendationRoutes);
 app.use('/api/public/recommendations', publicRecommendationRoutes);
+app.use('/api/meal-history', mealHistoryRoutes);
 
 // ─── 404 ──────────────────────────────────────────────────
 app.use((_req, res) => {
@@ -53,7 +60,7 @@ app.use(errorHandler);
 
 // ─── Start server ─────────────────────────────────────────
 const server = app.listen(config.port, () => {
-  console.log(`Chakula API listening on port ${config.port} [${config.nodeEnv}]`);
+  logger.info(`Chakula API listening on port ${config.port} [${config.nodeEnv}]`);
 
   // In single-process mode (dev), start the scheduler here
   const cluster = require('node:cluster');
@@ -62,7 +69,7 @@ const server = app.listen(config.port, () => {
     const { generateForAllUsers } = require('./modules/recommendations/recommendation.service');
     scheduleDailyAt(0, 0, () => {
       generateForAllUsers().catch(err => {
-        console.error('[Scheduler] Daily recommendation generation failed:', err.message);
+        logger.error({ err }, '[Scheduler] Daily recommendation generation failed');
       });
     });
   }
@@ -70,7 +77,7 @@ const server = app.listen(config.port, () => {
 
 // ─── Graceful shutdown ────────────────────────────────────
 async function shutdown(signal) {
-  console.log(`\n${signal} received — shutting down gracefully`);
+  logger.info(`${signal} received — shutting down gracefully`);
   server.close(async () => {
     await db.close();
     redis.disconnect();

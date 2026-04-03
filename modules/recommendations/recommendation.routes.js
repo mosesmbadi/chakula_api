@@ -1,6 +1,7 @@
 const { Router } = require('express');
 const ctrl = require('./recommendation.controller');
 const auth = require('../../core/middleware/authenticate');
+const { uploadMealImage } = require('../../core/middleware/upload');
 
 const router = Router();
 
@@ -17,7 +18,8 @@ router.get('/foods/recommend/all', ctrl.recommendAll);
 router.post('/generate', ctrl.triggerGeneration);
 
 // POST /api/recommendations/accept — accept foods for a single meal type
-router.post('/accept', ctrl.acceptMeal);
+// multipart/form-data fields: mealType (string), foods (JSON string), image (file, optional)
+router.post('/accept', uploadMealImage(), ctrl.acceptMeal);
 
 // POST /api/recommendations/accept/plan — accept the full day plan
 router.post('/accept/plan', ctrl.acceptPlan);

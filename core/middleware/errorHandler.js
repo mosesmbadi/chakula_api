@@ -1,12 +1,19 @@
 /**
  * Centralised error handler.
  */
+const logger = require('../logger');
+
 function errorHandler(err, req, res, _next) {
-  console.error(`[${new Date().toISOString()}] ${err.stack || err.message}`);
+  if (err.isOperational) {
+    logger.warn({ err, req: { method: req.method, url: req.url } }, err.message);
+  } else {
+    logger.error({ err, req: { method: req.method, url: req.url } }, 'Unhandled error');
+  }
 
   if (err.isOperational) {
     return res.status(err.statusCode || 400).json({ error: err.message });
   }
+
 
   res.status(500).json({ error: 'Internal server error' });
 }
