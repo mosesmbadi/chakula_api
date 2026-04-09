@@ -1,6 +1,7 @@
 const redis = require('../../core/redis');
 const config = require('../../core/config');
 const db = require('../../core/database/db');
+const logger = require('../../core/logger');
 const { AppError } = require('../../core/middleware/errorHandler');
 
 const MEAL_TYPES = ['breakfast', 'lunch', 'dinner'];
@@ -95,7 +96,7 @@ async function generateForUser(userId) {
       results[mealType] = data;
       await cacheRecommendations(userId, mealType, data);
     } catch (err) {
-      console.error(`Failed to fetch ${mealType} recommendations for user ${userId}:`, err.message);
+      logger.error({ err, userId, mealType }, 'Failed to fetch recommendations');
       results[mealType] = null;
     }
   }
@@ -124,7 +125,7 @@ async function generateForAllUsers() {
   let totalFailed = 0;
   const userSummaries = [];
 
-  console.log('[Scheduler] Starting daily recommendation generation…');
+  logger.info('Starting daily recommendation generation');
 
   while (true) {
     const { rows: users } = await db.query(
@@ -159,7 +160,7 @@ async function generateForAllUsers() {
     offset += batchSize;
   }
 
-  console.log(`[Scheduler] Done — ${totalProcessed} users processed, ${totalFailed} failed`);
+  logger.info({ totalProcessed, totalFailed }, 'Daily recommendation generation complete');
   return { totalProcessed, totalFailed, users: userSummaries };
 }
 
@@ -214,7 +215,7 @@ async function getAllRecommendations(userId) {
 
 const userRepo = require('../users/user.repository');
 
-async function acceptMealSuggestion(userId, { mealType, foods }) {
+async function acceptMealSuggestion(userId, { mealType, foods, imagePath }) {
   if (!MEAL_TYPES.includes(mealType)) {
     throw new AppError(`Invalid meal type. Must be one of: ${MEAL_TYPES.join(', ')}`, 400);
   }
@@ -232,6 +233,7 @@ async function acceptMealSuggestion(userId, { mealType, foods }) {
         mealName: food_name,
         cost: Number(cost),
         currency: currency || 'KES',
+        imagePath: imagePath || null,
       });
     }),
   );

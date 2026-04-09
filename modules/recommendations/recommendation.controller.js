@@ -38,8 +38,13 @@ async function triggerGeneration(req, res, next) {
 
 async function acceptMeal(req, res, next) {
   try {
-    const { mealType, foods } = req.body;
-    const result = await service.acceptMealSuggestion(req.user.userId, { mealType, foods });
+    let { mealType, foods } = req.body;
+    // When sent as multipart/form-data, foods arrives as a JSON string
+    if (typeof foods === 'string') {
+      try { foods = JSON.parse(foods); } catch { /* service validates foods */ }
+    }
+    const imagePath = req.fileUrl || null;
+    const result = await service.acceptMealSuggestion(req.user.userId, { mealType, foods, imagePath });
     res.status(201).json(result);
   } catch (err) {
     next(err);

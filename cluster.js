@@ -8,15 +8,17 @@ const os = require('node:os');
 
 const WORKER_COUNT = parseInt(process.env.CLUSTER_WORKERS, 10) || os.cpus().length;
 
+const logger = require('./core/logger');
+
 if (cluster.isPrimary) {
-  console.log(`Primary ${process.pid} — spawning ${WORKER_COUNT} workers`);
+  logger.info({ pid: process.pid, workers: WORKER_COUNT }, 'Primary spawning workers');
 
   for (let i = 0; i < WORKER_COUNT; i++) {
     cluster.fork();
   }
 
   cluster.on('exit', (worker, code) => {
-    console.error(`Worker ${worker.process.pid} exited (code ${code}) — restarting`);
+    logger.warn({ pid: worker.process.pid, code }, 'Worker exited — restarting');
     cluster.fork();
   });
 
@@ -25,7 +27,7 @@ if (cluster.isPrimary) {
   const { generateForAllUsers } = require('./modules/recommendations/recommendation.service');
   scheduleDailyAt(0, 0, () => {
     generateForAllUsers().catch(err => {
-      console.error('[Scheduler] Daily recommendation generation failed:', err.message);
+      logger.error({ err }, 'Daily recommendation generation failed');
     });
   });
 } else {

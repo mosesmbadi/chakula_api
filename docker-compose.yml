@@ -22,6 +22,7 @@ services:
     restart: unless-stopped
     env_file: .env
     environment:
+      NODE_ENV: production
       POSTGRES_HOST: ${POSTGRES_HOST}
       POSTGRES_PORT: ${POSTGRES_PORT}
       REDIS_HOST: 172.16.46.164
@@ -38,10 +39,8 @@ services:
       - .:/app
       - /app/node_modules
 
-
 volumes:
   redisdata:
-
 
 networks:
   chakula_net:

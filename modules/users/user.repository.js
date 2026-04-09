@@ -114,12 +114,12 @@ async function getDietaryPreferences(userId) {
 
 // ─── Meal History ─────────────────────────────────────────
 
-async function addMealHistory(userId, { mealId, mealName, cost, currency, rating, notes }) {
+async function addMealHistory(userId, { mealId, mealName, cost, currency, rating, notes, imagePath }) {
   const { rows } = await db.query(
-    `INSERT INTO meal_history (user_id, meal_id, meal_name, cost, currency, rating, notes)
-     VALUES ($1, $2, $3, $4, $5, $6, $7)
+    `INSERT INTO meal_history (user_id, meal_id, meal_name, cost, currency, rating, notes, image_path)
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
      RETURNING *`,
-    [userId, mealId || null, mealName, cost, currency || 'KES', rating || null, notes || null],
+    [userId, mealId || null, mealName, cost, currency || 'KES', rating || null, notes || null, imagePath || null],
   );
   return rows[0];
 }
