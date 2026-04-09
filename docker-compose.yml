@@ -24,9 +24,9 @@ services:
     environment:
       POSTGRES_HOST: ${POSTGRES_HOST}
       POSTGRES_PORT: ${POSTGRES_PORT}
-      REDIS_HOST: 192.168.100.46
+      REDIS_HOST: 172.16.46.164
       REDIS_PORT: 6379
-      KNOWLEDGE_BASE_URL: http://192.168.100.46:8000
+      KNOWLEDGE_BASE_URL: http://35.154.151.131:8000
     ports:
       - "3000:3000"
     depends_on:
