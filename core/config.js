@@ -14,7 +14,7 @@ module.exports = {
     idleTimeoutMillis: 30000,
     connectionTimeoutMillis: 5000,
     // Set default schema search path
-    options: `-c search_path=chakula_api,public`,
+    options: `-c search_path=chakula_api`,
   },
 
   redis: {

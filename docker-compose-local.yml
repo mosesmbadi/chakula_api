@@ -3,7 +3,6 @@ services:
     image: redis:7-alpine
     container_name: chakula_redis_local
     restart: unless-stopped
-    command: redis-server --requirepass ${REDIS_PASSWORD:-chakula}
     ports:
       - "6379:6379"
     volumes:
@@ -11,7 +10,7 @@ services:
     networks:
       - chakula_local_net
     healthcheck:
-      test: ["CMD", "redis-cli", "-a", "${REDIS_PASSWORD:-chakula}", "ping"]
+      test: ["CMD", "redis-cli", "ping"]
       interval: 5s
       timeout: 3s
       retries: 5

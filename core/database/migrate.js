@@ -31,7 +31,7 @@ CREATE TABLE IF NOT EXISTS users (
 );
 CREATE INDEX IF NOT EXISTS idx_users_email ON users (email);
 
--- ─── Additive column migrations (safe to re-run) ──────────
+-- ─── Additive column migrations for users (safe to re-run) ──
 ALTER TABLE users ADD COLUMN IF NOT EXISTS region    VARCHAR(100);
 ALTER TABLE users ADD COLUMN IF NOT EXISTS subregion VARCHAR(100);
 
@@ -71,6 +71,11 @@ CREATE TABLE IF NOT EXISTS meal_history (
   eaten_at   TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 CREATE INDEX IF NOT EXISTS idx_meal_history_user ON meal_history (user_id, eaten_at DESC);
+ALTER TABLE meal_history ADD COLUMN IF NOT EXISTS upvotes    INT NOT NULL DEFAULT 0;
+ALTER TABLE meal_history ADD COLUMN IF NOT EXISTS downvotes  INT NOT NULL DEFAULT 0;
+ALTER TABLE meal_history ADD COLUMN IF NOT EXISTS image_path VARCHAR(500);
+
+-- ─── Additive column migrations for meal_history (safe to re-run) ──
 ALTER TABLE meal_history ADD COLUMN IF NOT EXISTS upvotes    INT NOT NULL DEFAULT 0;
 ALTER TABLE meal_history ADD COLUMN IF NOT EXISTS downvotes  INT NOT NULL DEFAULT 0;
 ALTER TABLE meal_history ADD COLUMN IF NOT EXISTS image_path VARCHAR(500);

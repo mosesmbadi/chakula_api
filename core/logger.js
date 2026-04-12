@@ -8,7 +8,7 @@ const logger = pino({
   base: { service: 'chakula-api', env: config.nodeEnv },
   ...(isDev && {
     transport: {
-      target: 'pino-pretty',
+      target: require.resolve('pino-pretty'),
       options: { colorize: true, translateTime: 'SYS:standard', ignore: 'pid,hostname' },
     },
   }),

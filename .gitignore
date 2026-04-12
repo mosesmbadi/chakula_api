@@ -88,7 +88,6 @@ dmypy.json
 .pyre/
 
 # VS Code
-.vscode/
 
 # PyCharm
 .idea/
