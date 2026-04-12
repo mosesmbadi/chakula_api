@@ -3,6 +3,10 @@ const config = require('../config');
 
 const pool = new Pool(config.postgres);
 
+pool.on('connect', (client) => {
+  client.query('SET search_path TO chakula_api');
+});
+
 pool.on('error', (err) => {
   console.error('Unexpected PostgreSQL pool error:', err.message);
 });
